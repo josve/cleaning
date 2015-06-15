@@ -1,11 +1,11 @@
 library("dplyr")
 
 # First validate that all paths and files exist
-dataDir <- "."
+dataDir <- "data"
 
 if (!file.exists(dataDir))
 {
-    stop("data directory does not exist.")
+   dataDir <- "."
 }
 
 dataSetDir <- paste(dataDir, "UCI HAR Dataset", sep="/")
@@ -76,8 +76,7 @@ featuresDF <- tbl_df(featuresDF)
 
 names(featuresDF) <- c("id", "name")
 
-### X_train
-# 561 variables
+### Now we handle the training data set.
 xTrainPath <- paste(trainDir, "X_train.txt", sep="/")
 if (!file.exists(xTrainPath))
 {
@@ -93,7 +92,11 @@ XtrainDF <-
         stringsAsFactors = FALSE)
 
 XtrainDF <- tbl_df(XtrainDF)
+
+# assign names from the features table.
 names(XtrainDF) <- featuresDF$name
+
+# filter out all columns that don't contain mean() or std()
 mean_names <- grepl("mean()", names(XtrainDF), fixed=TRUE)
 std_names <- grepl("std()", names(XtrainDF), fixed=TRUE)
 filtered_names <- mean_names | std_names
@@ -144,9 +147,8 @@ train$subject <- subjectTrainDF$subject
 train <- merge(train, activityLabelsDF, by.x="label", by.y="id")
 train <- tbl_df(train)
 
-### test
+### Now we do the same for the test data set.
 ### X_test
-# 561 variables
 xTestPath <- paste(testDir, "X_test.txt", sep="/")
 if (!file.exists(xTestPath))
 {
@@ -163,6 +165,8 @@ XtestDF <-
 
 XtestDF <- tbl_df(XtestDF)
 names(XtestDF) <- featuresDF$name
+
+# Filter out mean/std columns
 mean_names <- grepl("mean()", names(XtestDF), fixed=TRUE)
 std_names <- grepl("std()", names(XtestDF), fixed=TRUE)
 filtered_names <- mean_names | std_names
@@ -214,16 +218,24 @@ test$subject <- subjectTestDF$subject
 test <- merge(test, activityLabelsDF, by.x="label", by.y="id")
 test <- tbl_df(test)
 
+
+# Now we combine the rows in the test and training data set.
 test$origin <- "test"
 train$origin <- "training"
 combined <- rbind(test, train)
 combined <- tbl_df(combined)
+
+# we don't need the label column anymore.
 combined$label <- NULL
+
+# Perform some cleanup on the column names.
 names(combined) <- gsub("()", "", names(combined), fixed=TRUE)
 names(combined) <- gsub("-mean", "Mean", names(combined), fixed=TRUE)
 names(combined) <- gsub("-std", "StandardDeviation", names(combined), fixed=TRUE)
 names(combined) <- gsub("-", "", names(combined), perl=TRUE)
 
+# Now we compute the mean of all measurements grouped by subject and activity, ignoring
+# origin column
 grouped_combined <- 
     combined %>% 
     select (-origin) %>% 
@@ -231,4 +243,5 @@ grouped_combined <-
 
 result <- grouped_combined %>% summarise_each(funs(mean))
 
+# write the result to a tidy.txt file.
 write.table(result, file="tidy.txt", row.name=FALSE)
