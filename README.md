@@ -74,3 +74,6 @@ functionality that automatically assigns the correct case.
 Finally we compute the mean of all measurements grouped by subject and activity, ignoring the
 origin column and we write the result to a file called tidy.txt in the current directory.
 
+CodeBook.md
+
+This file describes the operations performed and the variables in the result data set.
