@@ -5,14 +5,14 @@ if (!file.exists("data"))
     dir.create("data")
 }
 
-# Keep track of when the data was downloaded.
+# Keep track of when the data was downloaded, by writing the current
+# timestamp in a file.
 dateDownloaded <- date()
 dateFile <- file("data/downloadedDate.txt")
 writeLines(as.character(dateDownloaded), dateFile)
 close(dateFile)
 
 # Download the dataset
-
 zippedDataSetPath <- "data/UCI_HAR_Dataset.zip"
 download.file(
     url = "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip", 
@@ -20,9 +20,7 @@ download.file(
     quiet = FALSE,
     method="curl")
 
-# Unzip the zip
-unzip(
-    zipfile = zippedDataSetPath,
-    overwrite = TRUE,
-    exdir = "data")
-
+# Unzip the dataset
+unzip(zipfile = zippedDataSetPath,
+      overwrite = TRUE,
+      exdir = "data")
